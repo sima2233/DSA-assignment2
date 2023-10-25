@@ -1,0 +1,5 @@
+USER="root"
+PASSWORD=""
+HOST="localhost"
+PORT=3306
+DATABASE="fci_db"
