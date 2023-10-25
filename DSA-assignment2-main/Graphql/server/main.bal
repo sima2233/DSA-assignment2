@@ -138,12 +138,6 @@ KPI kpiData = {
     description: "KPI Description"
 };
 
-// Define the GraphQL service
-service <http:Service> performanceManagementServicebind new http:Listener(9090) {
-resource Supervisor getSupervisorInfo ()     {
-return supervisorData ;
-    }
-
             // Define the Supervisor mutation to approve employee's KPIs
             resource            KPI approveEmployeeKPIs(KPI input)     {
 if (employeeId == "<EmployeeID>" )  {
