@@ -27,6 +27,30 @@ type Objective record {|
     string department;
 |};
 
+// Define the Supervisor type
+type Supervisor object {
+    string firstName;
+    string lastName;
+    string jobTitle;
+    string position;
+    string role;
+};
+
+// Define the Supervisor data
+Supervisor supervisorData = {
+    firstName: "John",
+    lastName: "Doe",
+    jobTitle: "Supervisor",
+    position: "Manager",
+    role: "Supervisor"
+};
+
+// Define the KPI data
+KPI kpiData = {
+    name: "KPI Name",
+    description: "KPI Description"
+};
+
 configurable string USER = ?;
 configurable string PASSWORD = ?;
 configurable string HOST = ?;
@@ -89,55 +113,6 @@ service /graphql on new graphql:Listener(9090) {
 
 //Supervisor services
 
-// Define the Supervisor type
-type Supervisor object {
-    string firstName;
-    string lastName;
-    string jobTitle;
-    string position;
-    string role;
-};
-
-// Define the Employee type
-type Employee object {
-    string firstName;
-    string lastName;
-    string jobTitle;
-    string position;
-    string role;
-};
-
-// Define the KPI type
-type KPI object {
-    string name;
-    string description;
-    // Add more fields as necessary
-};
-
-// Define the Supervisor data
-Supervisor supervisorData = {
-    firstName: "John",
-    lastName: "Doe",
-    jobTitle: "Supervisor",
-    position: "Manager",
-    role: "Supervisor"
-};
-
-// Define the Employee data
-Employee employeeData = {
-    firstName: "Jane",
-    lastName: "Doe",
-    jobTitle: "Employee",
-    position: "Staff",
-    role: "Employee"
-};
-
-// Define the KPI data
-KPI kpiData = {
-    name: "KPI Name",
-    description: "KPI Description"
-};
-
             // Define the Supervisor mutation to approve employee's KPIs
             resource            KPI approveEmployeeKPIs(KPI input)     {
 if (employeeId == "<EmployeeID>" )  {
@@ -180,11 +155,22 @@ return employeeData ;
 }
 
 // Define the Supervisor mutation to grade employee's KPIs
-resource KPI gradeEmployeeKPIs(string employeeId, int grade) {
-        
-        kpiData .grade = grade;
-return kpiData ;
-}
+ remote function gradeEmployees(decimal employeeID, decimal supervisorID, decimal grade) returns decimal{
+        map<json> query = {"employeeID": employeeID, "supervisorID": supervisorID};
+        map<json> updateJson = {"$set": {"grade": grade}};
+
+        sql:newResult|error Newresult = check db->update("employeegrade", updateJson, query);
+
+        if (Newresult is error) {
+            return error("Failed to grade the supervisor");
+        }
+        else if (Newresult.modifiedCount > 0) {
+            return "Grading Complete";
+        }
+        else {
+            return "Not Found";
+        }
+    }
 }
 
 //Employee services
