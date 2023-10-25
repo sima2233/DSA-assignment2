@@ -3,6 +3,15 @@ import ballerina/sql;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
 
+@graphql:ServiceConfig {
+    graphiql: {
+        enabled: true,
+    // Path is optional, if not provided, it will be dafulted to `/graphiql`.
+    path: " "
+    }
+}
+
+
 
 type KPI record{
     int id;
@@ -95,18 +104,6 @@ service /graphql on new graphql:Listener(9090){
     //Employee services
 
 
-configurable string KpiCollection = "KPI";
-configurable string employeeCollection= "employee";
-configurable string databaseName = "fci_db";
-
-@graphql:ServiceConfig {
-    graphiql: {
-        enabled: true,
-    // Path is optional, if not provided, it will be dafulted to `/graphiql`.
-    path: " "
-    }
-}
-service / on new graphql:Listener(9000){
 
     remote function createKPI(KPI newKPI) returns error|string{
     map<json>  doc= <map<json>> newKPI.toJson();
@@ -114,7 +111,7 @@ service / on new graphql:Listener(9000){
         return string `${newKPI.name} added successfully`;
     } 
 
-    
+
     remote function viewScores(string employeeID) returns KPI[]|error {
     map<json> query = { "employeeID": employeeID };
     map<json>[]|error results = db->find(doc, KpiCollection, filter=(value));
