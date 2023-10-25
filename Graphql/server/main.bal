@@ -4,7 +4,14 @@ import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
 
 
-
+type KPI record{
+    int id;
+    string name;
+    string unit;
+    float value;
+    int employeeId;
+    int objectivesId;
+};
 
 type Employee record{|
     string employeeID;
@@ -86,4 +93,81 @@ service /graphql on new graphql:Listener(9090){
 
 
     //Employee services
+
+
+sql:ConnectionConfiguration sqlConfiguration = {
+    connection: {
+        host: "localhost",
+        port:3306,
+        auth: {
+            username: "",
+            password: ""
+        },
+        options: {
+            sslEnabled: false,
+            serverSelectionTimeout:5000
+        }
+    },
+    databaseName: "fci_db"
+};
+
+sql:Client db = check new (sqlConfiguration);
+
+configurable string KpiCollection = "KPI";
+configurable string employeeCollection= "employee";
+configurable string databaseName = "fci_db";
+
+
+    @graphql:ServiceConfig {
+    graphiql: {
+        enabled: true,
+    // Path is optional, if not provided, it will be dafulted to `/graphiql`.
+    path: " "
+    }
+}
+service / on new graphql:Listener(9000){
+
+    remote function createKPI(KPI newKPI) returns error|string{
+    map<json>  doc= <map<json>> newKPI.toJson();
+        _= check db->insert(doc, KpiCollection, "");
+        return string `${newKPI.name} added successfully`;
+    } 
+
+    
+    remote function viewScores(string employeeID) returns KPI[]|error {
+    map<json> query = { "employeeID": employeeID };
+    map<json>[]|error results = db->find(doc, KpiCollection, filter=(value));
+
+    if (results is map<json>[]) {
+        KPI[] kpis = [];
+        foreach map<json> doc in results {
+            KPI kpi = check jsonutils:toRecord(doc, KPI);
+            kpis.push(kpi);
+        }
+        return kpis;
+    } 
+    else {
+        return error("Error occurred while retrieving KPI documents.");
+    }
+
+}
+
+remote function gradeSupervisor(string employeeID, string supervisorID, float grade) returns string|error {
+        map<json> query = { "employeeID": employeeID, "supervisorID": supervisorID };
+        map<json> updateJson = { "$set": { "grade": grade } };
+        
+        // Update the grade in the collection
+        sql:newResult|error Newresult = check db->update("EmployeeSupervisorRelation", updateJson, query);
+     
+        if (Newresult is error) {
+            return error("Failed to grade the supervisor");
+        } 
+        else if (Newresult.modifiedCount > 0) {
+            return "Grading Complete";
+        } 
+        else {
+            return "Not Found";
+        }
+    }
+
 }
