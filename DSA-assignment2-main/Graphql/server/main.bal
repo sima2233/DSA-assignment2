@@ -1,4 +1,4 @@
-.import ballerina/graphql;
+import ballerina/graphql;
 import ballerina/sql;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
